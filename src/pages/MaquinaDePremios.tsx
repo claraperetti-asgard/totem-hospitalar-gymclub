@@ -20,33 +20,16 @@ import {
     neon,
 } from "../config/tema";
 
-/* Paleta, néon e medida-mestra moram em config/tema: as três telas do
-   jogo usam os mesmos valores e ter cópias em cada arquivo já estava
-   começando a divergir. */
-
-/* ---------- geometria dentro do vidro ----------
-   O vidro tem proporção fixa (1 / 1,08), então tudo é dito em % e as
-   contas valem em qualquer tamanho. A garra tem 34% da largura e o SVG é
-   140x110, então ela ocupa 34 * (110/140) / 1,08 = 24,7% da altura.
-
-   Vertical (% da altura do vidro, medindo do topo):
-     cabo esticado ............. 45,1
-     bolinha presa ............. 58,2% da altura da garra = 14,37
-     => centro da pegada ....... 45,1 + 14,37 = 59,5
-     centro da fileira de cima . 34,5 + 6,02 = 40,5 do fundo = 59,5 do topo
-   Os dois batem, então a bolinha não dá salto ao sair da pilha. */
-const CABO_TOPO = 22;          // repouso: perto da pilha, sem vão enorme
-const LARGURA_GARRA = 34;      // % da largura do vidro, no plano da frente
-const TAM_BOLA = 13;           // % da largura do vidro, no plano da frente
-const PASSO = 2.5;             // nudge de um toque na seta
-const VELOCIDADE = 0.5;        // % por frame segurando a seta lateral
-const PASSO_PROF = 0.32;       // planos por toque nas setas de profundidade
-const VELOCIDADE_PROF = 0.045; // planos por frame segurando
-const ASPECTO = 1.08;          // aspecto de partida, até o vidro ser medido
-
-/* Recuo das paredes internas. O piso é fundo de propósito: com os 6% de
-   antes ele era um filete e a pilha parecia flutuar contra a parede do
-   fundo. É a profundidade do piso que faz a caixa ler como caixa. */
+ 
+const CABO_TOPO = 22;          
+const LARGURA_GARRA = 34;        
+const TAM_BOLA = 13;            
+const PASSO = 2.5;           
+const VELOCIDADE = 0.5;        
+const PASSO_PROF = 0.32;       
+const VELOCIDADE_PROF = 0.045;  
+const ASPECTO = 1.08;           
+ 
 const PAREDE_X = 8;
 const PAREDE_Y = 6;
 
@@ -58,59 +41,32 @@ const T_RESULTADO = 900;
 
 
 type Fase = "idle" | "descendo" | "fechando" | "subindo" | "resultado";
-
-/* A posição na pilha é fixa; a arte e a inclinação são sorteadas a cada
-   partida, então a máquina nunca abre com a mesma cara duas vezes. */
+ 
 type Posicao = {
     id: number;
-    plano: number;  // 0 = frente da caixa, último = fundo
-    x: number;      // % da largura do vidro (centro)
+    plano: number;   
+    x: number;      
 };
 
 type Bola = Posicao & {
     rot: number;
     arte: string;
 };
-
-/* As artes que estão em public/ (o Vite serve essa pasta na raiz, por
-   isso o caminho começa com "/"). São cartelas em retrato, então entram
-   na bolinha em object-cover: o corte come só topo e base, e como a
-   figura é centralizada e a largura é preservada inteira, até os
-   logotipos deitados continuam legíveis.
-
-   A ordem alterna GymClub (laranja) e Hospitalar (azul) para a pilha não
-   ficar com blocos da mesma cor. Só liste arquivo que existe: caminho
-   que não resolve cai no index.html do SPA e a bolinha nasce vazia. */
+ 
 const ARTES = [
-    "/card-peso.png",
-    "/card-simbolo.jpeg",
-    "/card-markdown.png",
-    "/card-servico.jpeg",
-    "/card-simbolo.png",
-    "/card-logo.jpeg",
+    "/card1.png",    
+    "/card2.png",   
 ];
-
-/* ---------- profundidade ----------
-   As quatro fileiras não são degraus de uma pirâmide: são planos de
-   profundidade da caixa. Quanto mais ao fundo, mais alto na tela, menor
-   a bolinha e mais estreito o alcance lateral — é a perspectiva que já
-   está desenhada nas paredes do vidro.
-
-   A garra anda entre os planos, então o jogo tem dois eixos: as setas
-   laterais escolhem a coluna e as de profundidade escolhem o plano. */
+ 
 const BOLAS_POR_PLANO = 8;
 
-/* Espalha n bolinhas entre a e b. A faixa encolhe plano a plano porque o
-   fundo da caixa é mais estreito que a frente. */
+ 
 const faixa = (a: number, b: number) =>
     Array.from({ length: BOLAS_POR_PLANO }, (_, i) =>
         +(a + ((b - a) * i) / (BOLAS_POR_PLANO - 1)).toFixed(2)
     );
 
-/* Cada plano encosta num piso mais alto. O passo entre eles (0,58 altura
-   de bolinha) é bem menor que a bolinha inteira, então os planos se
-   sobrepõem quase pela metade: é essa sobreposição que faz ler como monte
-   amontoado em vez de fileiras empilhadas. */
+ 
 const PLANOS = [
     { escala: 1, xs: faixa(6, 88) },
     { escala: 0.89, xs: faixa(9.5, 84.5) },
@@ -119,37 +75,24 @@ const PLANOS = [
 ];
 
 const FUNDO_DA_CAIXA = PLANOS.length - 1;
-
-/* Agora que a máquina ocupa a tela toda, o vidro tem a altura que sobra —
-   o aspecto varia com o monitor. Larguras continuam em % da largura do
-   vidro (constantes), e tudo que é vertical é derivado delas dividindo
-   pelo aspecto medido. Assim a composição da pilha se mantém igual em
-   qualquer proporção de tela. */
+ 
 const alturaGarra = (s: number, asp: number) => (LARGURA_GARRA * s * (110 / 140)) / asp;
 const alturaBola = (s: number, asp: number) => (TAM_BOLA * s) / asp;
-
-/* Profundidade do piso e distância entre planos, ambas medidas em alturas
-   de bolinha para a pilha não esticar nem achatar junto com a tela. */
+ 
 const pisoFundo = (asp: number) => 1.83 * alturaBola(1, asp);
 const yDoPlano = (p: number, asp: number) => p * 0.58 * alturaBola(1, asp);
 
-/* O pórtico também recua: no fundo ele encosta no teto da caixa, que já
-   está recuado PAREDE_Y. */
+ 
 const topoDoPlano = (p: number) => (p / FUNDO_DA_CAIXA) * PAREDE_Y;
 
-/* Quanto o cabo precisa esticar para a pegada da garra cair exatamente no
-   centro das bolinhas daquele plano. A bolinha presa fica a 58,2% da
-   altura da garra. */
+ 
 const caboDoPlano = (p: number, asp: number) => {
     const { escala } = PLANOS[p];
     const centroDaBola = 100 - (yDoPlano(p, asp) + alturaBola(escala, asp) / 2);
 
     return centroDaBola - topoDoPlano(p) - 0.582 * alturaGarra(escala, asp);
 };
-
-/* A profundidade da garra é contínua, não um índice: as setas de frente e
-   trás deslizam igual às laterais. Estes ajudantes interpolam entre os
-   planos vizinhos para qualquer posição intermediária. */
+ 
 const interpola = (p: number, pega: (i: number) => number) => {
     const a = Math.floor(p);
     const b = Math.min(a + 1, FUNDO_DA_CAIXA);
@@ -157,16 +100,12 @@ const interpola = (p: number, pega: (i: number) => number) => {
 };
 
 const escalaEm = (p: number) => interpola(p, (i) => PLANOS[i].escala);
-
-/* A garra não pode sair da faixa de bolinhas da profundidade em que está;
-   o fundo é mais estreito que a frente. */
+ 
 const limitesEm = (p: number) => ({
     min: interpola(p, (i) => PLANOS[i].xs[0]),
     max: interpola(p, (i) => PLANOS[i].xs[PLANOS[i].xs.length - 1]),
 });
-
-/* Quanto um plano de distância "pesa" comparado a 1% lateral, na hora de
-   escolher a bolinha visada. */
+ 
 const PESO_PROFUNDIDADE = 14;
 
 const POSICOES: Posicao[] = PLANOS.flatMap(({ xs }, plano) =>
@@ -186,13 +125,7 @@ const embaralha = <T,>(lista: T[]): T[] => {
     return copia;
 };
 
-/* Monta a pilha do zero. Roda uma vez por partida (useState com
-   inicializador), então cada pessoa encontra um arranjo diferente, mas
-   ele não muda no meio da jogada.
-
-   As artes saem de baralhos embaralhados encadeados em vez de sorteio
-   solto por bolinha: assim todas aparecem um número parecido de vezes e
-   o acaso não amontoa cinco iguais lado a lado. */
+ 
 function montaPilha(): Bola[] {
     const baralho: string[] = [];
 
@@ -202,11 +135,9 @@ function montaPilha(): Bola[] {
 
     return POSICOES.map((p, i) => ({
         ...p,
-        // desencontro lateral: sem isso os planos viram uma grade alinhada
-        // e a pilha perde a cara de monte
+ 
         x: +(p.x + (Math.random() * 2 - 1) * 2.2).toFixed(2),
-        // inclinação pequena: estampa muito torta em logotipo fica desleixada
-        rot: Math.round((Math.random() * 2 - 1) * 7),
+         rot: Math.round((Math.random() * 2 - 1) * 7),
         arte: baralho[i],
     }));
 }
@@ -220,8 +151,7 @@ function Bulbo({ delay }: { delay: number }) {
             style={{
                 width: med(0.012, 4),
                 height: med(0.012, 4),
-                // brancas com aro escuro: o letreiro agora é laranja, então
-                // branco puro sem contorno se dissolveria no fundo
+                
                 background: "#ffffff",
                 boxShadow: `0 0 8px 3px rgba(255,255,255,.9), 0 0 0 2px ${LARANJA_ESCURO}`,
                 animation: `claw-bulb 1.6s ease-in-out ${delay}ms infinite`,
@@ -229,29 +159,17 @@ function Bulbo({ delay }: { delay: number }) {
         />
     );
 }
-
-/* A bolinha mora em components/BolinhaPremio: a tela final mostra a que a
-   pessoa pegou, e duplicar o sombreado nas duas telas ia acabar
-   divergindo. */
+ 
 const Bolinha = ({ bola, alvo = false }: { bola: Bola; alvo?: boolean }) => (
     <BolinhaPremio arte={bola.arte} rot={bola.rot} alvo={alvo} />
 );
 
-/* A garra é SVG justamente para poder abrir e fechar: cada dedo é um
-   traço grosso girado em torno da base. A bolinha presa fica atrás, e os
-   dedos passam por cima dela — é isso que lê como "segurando". */
-/* dedo: abre para fora no meio e faz gancho de volta para dentro na
-   ponta. É esse "S" que lê como garra — um dedo só arqueado para fora
-   vira perna de guarda-chuva. */
+ 
 const DEDO = "M 0 0 C 13 8, 20 26, 0 48";
 const PIVO_DEDO = 16;          // afastamento do eixo, em unidades do viewBox
 const GROSSURA_DEDO = 14;
 const SUAVE = "transform .45s cubic-bezier(.34,1.15,.5,1)";
-
-/* Fechada, a garra não junta as pontas no centro: ela para na borda da
-   bolinha, senão esconde o prêmio que acabou de pegar. A conta é pela
-   BORDA do traço, não pelo eixo — o dedo tem 14 de grossura, então o
-   eixo precisa parar 7 além do raio da bolinha (26,75 no viewBox). */
+ 
 const ANGULO = (fechada: boolean) => (fechada ? -8 : -30);
 
 const VIEWBOX_GARRA = "-70 -30 140 110";
@@ -263,8 +181,7 @@ function DedoGarra({ abre, espelho = false }: { abre: number; espelho?: boolean 
             style={{ transition: SUAVE }}
         >
             <path d={DEDO} stroke="url(#cromo)" strokeWidth={GROSSURA_DEDO} strokeLinecap="round" fill="none" />
-            {/* fio de luz que corre por dentro do dedo: é o que dá o cromado */}
-            <path
+             <path
                 d={DEDO}
                 stroke="rgba(255,255,255,.5)"
                 strokeWidth="4"
@@ -276,12 +193,9 @@ function DedoGarra({ abre, espelho = false }: { abre: number; espelho?: boolean 
     );
 }
 
-/* Dedo de trás em camada própria: ele precisa ficar ATRÁS da bolinha
-   presa, senão cruza na frente do prêmio e estraga a leitura. */
+ 
 function GarraFundo({ fechada }: { fechada: boolean }) {
-    // mesma construção do dedo da frente — degradê de cromo mais um fio de
-    // luz por dentro — só que uma oitava mais escura, para ler como metal
-    // na sombra. Chapado ele vira vulto; claro demais some no azul da caixa.
+ 
     const dedo = "M 0 0 C 5 12, 8 28, 2 46";
 
     return (
@@ -454,10 +368,7 @@ export default function MaquinaDePremios() {
     const [prof, setProf] = useState(1);
     // bolinhas que a garra esbarrou ao descer, para o solavanco
     const [sacudidas, setSacudidas] = useState<Record<number, [number, number]>>({});
-
-    /* O vidro agora estica para preencher a tela, então a proporção dele
-       depende do monitor. A geometria da pilha e do cabo é derivada dela,
-       por isso é medida de verdade em vez de assumida. */
+ 
     const vidroRef = useRef<HTMLDivElement>(null);
     const [aspecto, setAspecto] = useState(ASPECTO);
 
@@ -486,17 +397,11 @@ export default function MaquinaDePremios() {
     const jogando = fase !== "idle";
     const acabou = attempts >= MAX_ATTEMPTS;
     const travado = jogando || acabou;
-
-    /* O fundo da caixa é mais estreito que a frente, então uma posição
-       válida num plano pode cair fora da faixa do outro. Em vez de
-       corrigir o x guardado num efeito, o valor é limitado na leitura:
-       ao voltar para a frente a garra recupera onde estava. */
+ 
     const limites = limitesEm(prof);
     const xGarra = clamp(x, limites.min, limites.max);
 
-    /* Mira em 3D: a bolinha visada é a mais próxima somando o desvio
-       lateral com o de profundidade. Como a garra desliza entre planos, o
-       alvo troca suavemente conforme ela anda para o fundo. */
+ 
     const custo = (b: Bola) =>
         Math.abs(b.x - xGarra) + Math.abs(b.plano - prof) * PESO_PROFUNDIDADE;
 
@@ -513,13 +418,7 @@ export default function MaquinaDePremios() {
     const agenda = useCallback((fn: () => void, ms: number) => {
         timersRef.current.push(window.setTimeout(fn, ms));
     }, []);
-
-    /* ----- movimento -----
-       Os dois eixos rodam no MESMO loop de animação: assim dá para andar
-       de lado e para o fundo ao mesmo tempo, e segurar qualquer seta
-       desliza igual. O x é limitado só pela faixa mais larga aqui; o
-       limite do plano atual é aplicado na leitura (xGarra), senão o loop
-       precisaria enxergar a profundidade a cada frame. */
+ 
     const paraMover = useCallback(() => {
         dirRef.current = 0;
         dirProfRef.current = 0;
@@ -580,19 +479,14 @@ export default function MaquinaDePremios() {
 
         const ganhou = Math.random() < WIN_CHANCE;
         const alvo = bolaAlvo.id;
-        // guardado agora, não no fim: a tela final mostra a bolinha que a
-        // pessoa pegou, e ler isso do estado depois pegaria valor defasado
+ 
         const arteAlvo = bolaAlvo.arte;
 
         setFase("descendo");
         setMessage("Descendo a garra...");
         setProf(bolaAlvo.plano);
         setCabo(caboDoPlano(bolaAlvo.plano, aspecto));
-
-        /* Empurrão nas vizinhas do mesmo plano. Sai do centro da garra e
-           perde força com a distância — é o peso da máquina de verdade.
-           `incluiAlvo` é o que separa vitória de derrota: perdendo, a
-           própria bolinha visada foge junto e a garra fecha no vazio. */
+ 
         const empurra = (intensidade: number, incluiAlvo: boolean) => {
             const empurrao: Record<number, [number, number]> = {};
 
@@ -615,9 +509,7 @@ export default function MaquinaDePremios() {
             setSacudidas(empurrao);
         };
 
-        /* Dois tempos: um tremor leve quando a garra ainda está chegando
-           (é o "será que pega?") e o empurrão de verdade na hora que ela
-           encosta. */
+  
         agenda(() => empurra(3.5, false), T_DESCIDA - 520);
 
         const tSobe = T_DESCIDA + T_FECHA;
@@ -640,9 +532,7 @@ export default function MaquinaDePremios() {
                 setMessage("Subindo com o prêmio!");
             }, tSobe);
         } else {
-            /* Derrota: as bolinhas se afastam bem na hora em que a garra
-               fecha — não antes, senão o resultado é entregue cedo e a
-               tensão morre. A garra fecha no vazio e sobe vazia. */
+ 
             agenda(() => empurra(16, true), T_DESCIDA - 40);
 
             agenda(() => {
@@ -723,17 +613,14 @@ export default function MaquinaDePremios() {
         };
     }, []);
 
-    /* parede interna: um dos quatro planos que dão profundidade à caixa */
-    const parede = (recorte: string, fundo: string) => (
+     const parede = (recorte: string, fundo: string) => (
         <div className="pointer-events-none absolute inset-0" style={{ clipPath: recorte, background: fundo }} />
     );
 
     return (
-        /* A tela É a máquina: nada de gabinete flutuando dentro da página.
-           Letreiro no topo, vidro esticando para tomar a altura que sobra
-           e painel no rodapé. */
+        
         <div
-            className="relative flex h-screen w-full select-none flex-col overflow-hidden"
+            className="totem-fixo relative flex h-screen w-full select-none flex-col overflow-hidden"
             style={{
                 background: `linear-gradient(165deg, ${AZUL_CEU} 0%, ${AZUL_VIVO} 30%, ${AZUL} 68%, ${AZUL_PROFUNDO} 100%)`,
                 padding: med(0.03),
@@ -754,8 +641,7 @@ export default function MaquinaDePremios() {
                             boxShadow: `${neon(0.9)}, inset 0 3px 0 rgba(255,255,255,.5), inset 0 -8px 18px rgba(0,0,0,.28)`,
                         }}
                     >
-                        {/* dentro do letreiro: sem gabinete, no canto da tela
-                            ele cairia por cima da moldura */}
+                     
                         <NavLink
                             to="/"
                             className="absolute left-[2%] top-1/2 grid -translate-y-1/2 place-items-center rounded-2xl border border-white/40 bg-black/20 backdrop-blur"
@@ -806,10 +692,7 @@ export default function MaquinaDePremios() {
                             boxShadow: `${neon(0.75)}, inset 0 0 44px rgba(0,0,0,.55)`,
                         }}
                     >
-                        {/* paredes internas: dão a caixa em perspectiva. Cada
-                            plano é um degrau do mesmo azul de marca — é o
-                            contraste entre eles que lê como profundidade, não
-                            o escuro. */}
+                      
                         {parede(
                             `polygon(0 0, ${PAREDE_X}% ${PAREDE_Y}%, ${PAREDE_X}% ${100 - pisoFundo(aspecto)}%, 0 100%)`,
                             `linear-gradient(90deg, ${AZUL_VIVO} 0%, ${AZUL_PROFUNDO} 100%)`
@@ -843,13 +726,7 @@ export default function MaquinaDePremios() {
 
                         <Holofote x={24} />
                         <Holofote x={76} />
-
-                        {/* Bolinhas e garra intercaladas por profundidade: os
-                            planos do fundo são desenhados primeiro e os da
-                            frente por último. A garra entra logo depois das
-                            bolinhas do seu próprio plano, então ela passa na
-                            frente delas mas SOME atrás das que estão mais à
-                            frente na caixa — é isso que vende o 3D. */}
+ 
                         {Array.from({ length: PLANOS.length }, (_, k) => FUNDO_DA_CAIXA - k).map((ip) => (
                             <Fragment key={ip}>
                                 {bolas
@@ -896,18 +773,15 @@ export default function MaquinaDePremios() {
                                 left: `${xGarra}%`,
                                 transform: "translateX(-50%)",
                                 width: `${LARGURA_GARRA * escala}%`,
-                                // sem transição: os dois eixos são redesenhados
-                                // a cada frame pelo loop de animação
+                            
                             }}
                         >
-                            {/* recuo do pórtico: no fundo ele encosta no teto */}
-                            <div
+                             <div
                                 className="shrink-0"
                                 style={{ height: `${topoDoPlano(prof)}%` }}
                             />
 
-                            {/* cabo — sai direto do teto, sem trilho aparente */}
-                            <div
+                             <div
                                 className="shrink-0 rounded-full"
                                 style={{
                                     width: med(0.006, 2),
@@ -917,8 +791,7 @@ export default function MaquinaDePremios() {
                                 }}
                             />
 
-                            {/* garra; balança de leve enquanto ninguém joga */}
-                            <div
+                             <div
                                 className="relative w-full shrink-0"
                                 style={{
                                     aspectRatio: "140 / 110",
@@ -932,8 +805,7 @@ export default function MaquinaDePremios() {
                             >
                                 <GarraFundo fechada={fechada} />
 
-                                {/* bolinha presa: fica atrás dos dedos da frente, que passam por cima */}
-                                {bolaPresa && (
+                                 {bolaPresa && (
                                     <div
                                         className="absolute"
                                         style={{
@@ -954,8 +826,7 @@ export default function MaquinaDePremios() {
                             </Fragment>
                         ))}
 
-                        {/* reflexo no vidro da frente */}
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/[.04]" />
+                         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/[.04]" />
 
                         <div className="pointer-events-none absolute inset-0 overflow-hidden">
                             <div
@@ -1001,9 +872,7 @@ export default function MaquinaDePremios() {
                                     />
                                 </svg>
                             </button>
-
-                            {/* cruz de direção: cima e baixo são profundidade,
-                                esquerda e direita são a coluna */}
+ 
                             <div
                                 className="grid w-[52%]"
                                 style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: med(0.012) }}
@@ -1048,8 +917,7 @@ export default function MaquinaDePremios() {
 
                         {/* status */}
                         <div className="mt-[4%] flex items-center justify-between" style={{ gap: med(0.02) }}>
-                            {/* o painel agora é azul claro: texto precisa de
-                                branco cheio e sombra para não lavar */}
+                          
                             <span
                                 className="whitespace-nowrap font-bold text-white"
                                 style={{ fontSize: med(0.028, 11), textShadow: "0 2px 4px rgba(0,0,0,.4)" }}

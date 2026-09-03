@@ -18,7 +18,7 @@ const DECORACAO = [
 export default function Home() {
     return (
         <div
-            className="relative flex min-h-screen w-full select-none flex-col items-center justify-between overflow-hidden px-6 py-[6vh] text-white"
+            className="totem-fixo relative flex h-screen w-full select-none flex-col items-center justify-between overflow-hidden px-6 py-[6vh] text-white"
             style={{ background: FUNDO_TOTEM }}
         >
             <div className="pointer-events-none absolute -top-25 h-150 w-150 animate-pulse rounded-full bg-white/12 blur-[150px]" />

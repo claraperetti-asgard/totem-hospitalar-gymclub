@@ -2,9 +2,11 @@ import { useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import confetti from "canvas-confetti";
 
+import LogoHospitalar from "../assets/logo-hospitalar-branco.png";
+import LogoGymClub from "../assets/logo-mark (1).png";
+import MarkGymClub from "../assets/mark (1).png";
 import BolinhaPremio from "../components/BolinhaPremio";
-import MarcasParceria from "../components/MarcasParceria";
-import { AZUL_CEU, FUNDO_TOTEM, LARANJA, LARANJA_CLARO, LARANJA_ESCURO, LARANJA_VIVO } from "../config/tema";
+import { AZUL_CEU, FUNDO_TOTEM, LARANJA, LARANJA_CLARO, LARANJA_ESCURO, LARANJA_VIVO, med } from "../config/tema";
 
 export default function EndScreen() {
     const { state } = useLocation();
@@ -46,17 +48,24 @@ export default function EndScreen() {
     const ganhou = status === "win";
 
     return (
+        /* mesma armação da home: Hospitalar no topo, GymClub na base e o
+           conteúdo no meio */
         <div
-            className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden text-white"
+            className="totem-fixo relative flex h-screen w-full select-none flex-col items-center justify-between overflow-hidden px-6 py-[6vh] text-white"
             style={{ background: FUNDO_TOTEM }}
         >
-            <div className="absolute -top-25 h-150 w-150 animate-pulse rounded-full bg-white/15 blur-[150px]" />
-            <div className="absolute -bottom-25 -right-25 h-100 w-100 rounded-full blur-[120px]" style={{ background: "rgba(255,136,63,.25)" }} />
+            <div className="pointer-events-none absolute -top-25 h-150 w-150 animate-pulse rounded-full bg-white/15 blur-[150px]" />
+            <div className="pointer-events-none absolute -bottom-25 -right-25 h-100 w-100 rounded-full blur-[120px]" style={{ background: "rgba(255,136,63,.25)" }} />
 
-            <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-8 px-8 text-center">
+            {/* ---------- topo: Hospitalar ---------- */}
+            <img
+                src={LogoHospitalar}
+                alt="Plano de Saúde Hospitalar"
+                style={{ height: med(0.4, 25) }}
+                className="relative z-10 object-contain"
+            />
 
-                {/* as duas marcas juntas: é uma parceria, não uma tela do Hospitalar */}
-                <MarcasParceria />
+            <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-8 text-center">
 
                 {ganhou ? (
                     <div className="flex animate-fade-in-up flex-col items-center gap-6">
@@ -124,6 +133,19 @@ export default function EndScreen() {
                     Jogar Novamente
                 </NavLink>
 
+            </div>
+
+            {/* ---------- base: GymClub ---------- */}
+            <div className="relative z-10 flex items-center" style={{ gap: med(0.03) }}>
+                <img src={MarkGymClub} alt="" style={{ height: med(0.08, 30) }} className="object-contain" />
+
+                <img
+                    src={LogoGymClub}
+                    alt="GymClub"
+                    // o wordmark é preto no arquivo; invertido vira branco
+                    style={{ height: med(0.2, 17), filter: "brightness(0) invert(1)" }}
+                    className="object-contain"
+                />
             </div>
 
             <style>{`

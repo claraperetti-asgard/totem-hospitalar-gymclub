@@ -8,6 +8,7 @@ import Relatorio from "../pages/Relatorio";
 import Roleta from "../pages/Roleta";
 import SlotMachine from "../pages/SlotMachine";
 import MaquinaDePremios from "../pages/MaquinaDePremios";
+import Cadastro from "../pages/Cadastro";
  import EndScreen from "../pages/EndScreen";
 
 export function AppRoutes() {
@@ -74,6 +75,7 @@ export function AppRoutes() {
         <Route path="/relatorio" element={<Relatorio />} />
         <Route path="/roleta" element={<Roleta />} />
         <Route path="/slot-machine" element={<SlotMachine />} />
+        <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/maquina-de-premios" element={<MaquinaDePremios />} />
         <Route path="/final" element={<EndScreen />} />
       </Route>

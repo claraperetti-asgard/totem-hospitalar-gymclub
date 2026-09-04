@@ -52,10 +52,21 @@ type Bola = Posicao & {
     rot: number;
     arte: string;
 };
- 
-const ARTES = [
-    "/card1.png",    
-    "/card2.png",   
+
+/* Os prêmios da pilha. O "peso" é quantas cópias cada um entra num
+   baralho — é ele que faz a bolinha dupla ser mais rara que as outras.
+   Com 5/5/2 e 44 posições, dá mais ou menos 18 Hospitalar, 18 GymClub e
+   8 duplas. Para deixá-la mais rara ainda, baixe só o peso dela. */
+type Premio = {
+    arte: string;
+    peso: number;
+};
+
+const PREMIOS: Premio[] = [
+    { arte: "/card1.png", peso: 5 },
+    { arte: "/card2.png", peso: 5 },
+    // vale um prêmio de cada marca, por isso entra bem menos vezes
+    { arte: "/card-hospitalar-gymclub.png", peso: 2 },
 ];
  
 const BOLAS_POR_PLANO = 11;
@@ -127,18 +138,22 @@ const embaralha = <T,>(lista: T[]): T[] => {
 
  
 function montaPilha(): Bola[] {
-    const baralho: string[] = [];
+    /* Um baralho tem cada prêmio repetido pelo seu peso. Embaralhar e
+       encadear baralhos inteiros mantém a proporção sempre — sorteio solto
+       por bolinha faria a quantidade de duplas variar demais de partida
+       para partida, e podia sair pilha sem nenhuma. */
+    const molde = PREMIOS.flatMap((p) => Array<Premio>(p.peso).fill(p));
+    const baralho: Premio[] = [];
 
     while (baralho.length < POSICOES.length) {
-        baralho.push(...embaralha(ARTES));
+        baralho.push(...embaralha(molde));
     }
 
     return POSICOES.map((p, i) => ({
         ...p,
- 
         x: +(p.x + (Math.random() * 2 - 1) * 2.2).toFixed(2),
-         rot: Math.round((Math.random() * 2 - 1) * 7),
-        arte: baralho[i],
+        rot: Math.round((Math.random() * 2 - 1) * 7),
+        arte: baralho[i].arte,
     }));
 }
 

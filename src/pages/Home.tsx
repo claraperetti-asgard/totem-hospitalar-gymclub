@@ -75,7 +75,7 @@ export default function Home() {
                 </p>
 
                 <NavLink
-                    to="/maquina-de-premios"
+                    to="/cadastro"
                     className="mt-[2vh] grid place-items-center rounded-full transition-transform duration-300 hover:scale-110 active:scale-95"
                     style={{
                         width: med(0.2, 96),

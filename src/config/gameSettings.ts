@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
 const STORAGE_KEY = "slot_game_settings";
 
 export const ADMIN_USER = "hospitalar";
-export const ADMIN_PASSWORD = "hospitalar@2026";
+export const ADMIN_PASSWORD = "hospitalar2026";
 
 const clamp = (value: number, min: number, max: number) =>
     Math.min(max, Math.max(min, value));

@@ -7,7 +7,11 @@ export type GameSettings = {
 
 export const DEFAULT_SETTINGS: GameSettings = {
     maxAttempts: 1,
-    winChance: 0.45,
+    /* Chance de a garra subir com a bolinha. Vale de 0 a 1 — 0.5 é meio a
+       meio. Este é só o padrão de fábrica: o painel admin grava outro
+       valor no localStorage e ele passa a mandar, sem mexer no código.
+       Trocar aqui só muda máquinas que nunca tiveram o painel usado. */
+    winChance: 0.5,
 };
 
 const STORAGE_KEY = "slot_game_settings";

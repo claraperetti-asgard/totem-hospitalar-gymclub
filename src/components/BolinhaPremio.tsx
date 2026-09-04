@@ -8,21 +8,16 @@
 export default function BolinhaPremio({
     arte,
     rot = 0,
-    alvo = false,
 }: {
     arte: string;
     rot?: number;
-    alvo?: boolean;
 }) {
     return (
         <div
             className="relative h-full w-full overflow-hidden rounded-full"
             style={{
                 transform: `rotate(${rot}deg)`,
-                boxShadow: alvo
-                    ? "0 5px 14px rgba(0,0,0,.65), 0 0 0 2px rgba(255,136,63,.95), 0 0 8px rgba(255,136,63,.42), 0 0 28px rgba(255,136,63,.2)"
-                    : "0 5px 14px rgba(0,0,0,.65)",
-                transition: "box-shadow .25s ease",
+                boxShadow: "0 5px 14px rgba(0,0,0,.65)",
             }}
         >
             <img src={arte} alt="" className="absolute inset-0 h-full w-full object-cover" />

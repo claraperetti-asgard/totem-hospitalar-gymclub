@@ -58,7 +58,7 @@ const ARTES = [
     "/card2.png",   
 ];
  
-const BOLAS_POR_PLANO = 8;
+const BOLAS_POR_PLANO = 11;
 
  
 const faixa = (a: number, b: number) =>
@@ -160,8 +160,8 @@ function Bulbo({ delay }: { delay: number }) {
     );
 }
  
-const Bolinha = ({ bola, alvo = false }: { bola: Bola; alvo?: boolean }) => (
-    <BolinhaPremio arte={bola.arte} rot={bola.rot} alvo={alvo} />
+const Bolinha = ({ bola }: { bola: Bola }) => (
+    <BolinhaPremio arte={bola.arte} rot={bola.rot} />
 );
 
  
@@ -760,7 +760,7 @@ export default function MaquinaDePremios() {
                                                             : "transform .5s cubic-bezier(.3,1.5,.5,1)",
                                                     }}
                                                 >
-                                                    <Bolinha bola={b} alvo={!travado && b.id === bolaAlvo.id} />
+                                                    <Bolinha bola={b} />
                                                 </div>
                                             </div>
                                         );
